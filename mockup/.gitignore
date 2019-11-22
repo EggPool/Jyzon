@@ -1,0 +1,6 @@
+*.old.py
+*.old
+*.sav
+*.bak
+*.log
+*.log.*

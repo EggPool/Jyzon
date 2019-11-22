@@ -1,14 +1,14 @@
 # Jyzon
 Jyzon is a json-rpc interface to a Nyzo verifier/client, allowing easy access to core functions for GUIs: Wallets, Cycle transactions...
 
-## Goals
+## Goals
 
 - Be as close as possible to a bitdcoind rpc server
 - Safe enough to be used IRL
 - Lightweight and easy to install
 - Middleware for easing GUI Tools development like wallets and voting helpers.
 
-## Architecture
+## Architecture
 
 - Json-rpc server
 - local interface to a Nyzo verifier and nyzo client
@@ -22,4 +22,5 @@ Jyzon is a json-rpc interface to a Nyzo verifier/client, allowing easy access to
 
 ## Changelog
 
+0.0.2: Mockup app
 0.0.1: Initial commit, scaffold
