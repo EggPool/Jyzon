@@ -1,0 +1,11 @@
+jsond.conf
+*.old.py
+.wallet
+__pycache__
+test1sd.py
+*.old
+*.sav
+*.bak
+sd*.*
+*.log
+*.log.*
