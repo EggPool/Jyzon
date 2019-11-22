@@ -16,11 +16,13 @@ Jyzon is a json-rpc interface to a Nyzo verifier/client, allowing easy access to
 
 ## Future options
 
+- support ssh, to run on a local machine but query a distant client.
 - Add a websocket server
 - Allow for plugins and events depending on transaction rules, like alert when receiving Nyzos or on new cycle transactions.
 
 
 ## Changelog
 
+0.0.3: First pexpect tests
 0.0.2: Mockup app
 0.0.1: Initial commit, scaffold

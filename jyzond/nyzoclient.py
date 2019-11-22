@@ -6,13 +6,14 @@ A basic Nyzo client for the Json-RPC gateway
 
 # Generic modules
 import os
+import re
 import sys
 import threading
 from time import time, sleep
 from distutils.version import LooseVersion
 from logging import getLogger
 from asyncttlcache import Asyncttlcache
-
+from pexpect import spawn, EOF, TIMEOUT
 
 __version__ = "0.0.1"
 
@@ -24,6 +25,10 @@ API_VERSION = "0.1a"
 """
 
 app_log = getLogger("tornado.application")
+
+RE_VERSION = r"Nyzo client, version (\d+) "
+RE_NODESCOUNT = r"NodeManager initialization: loaded (\d+) nodes into map"
+RE_STATUS = r"frozen edge: (\d+), (\d+) from open"
 
 
 class NyzoClient:
@@ -39,6 +44,7 @@ class NyzoClient:
         "watchdog_thread",
         "poll",
         "_client_process",
+        "client_version"
     )
 
     def __init__(self, config):
@@ -48,6 +54,7 @@ class NyzoClient:
             self.frozen_edge = 0
             self.from_open = -1
             self._client_process = None
+            self.client_version = 0
         except Exception as e:
             print("conn0", e)
         try:
@@ -70,13 +77,66 @@ class NyzoClient:
         except Exception as e:
             print("conn2", e)
 
+    def _client_gone(self):
+        self._client_process = None
+        self.client_version = 0
+
+    def _create_client_process(self):
+        start = time()
+        self._client_process = spawn("/usr/bin/env python3 ../mockup/mockup.py")
+        index = self._client_process.expect([TIMEOUT, RE_VERSION, EOF])
+        #print("Index", index)
+        #print(self._client_process.after)
+        #print(self._client_process.match)
+        if index == 1:
+            # print(self._client_process.match.groups())
+            self.client_version = self._client_process.match.groups()[0].decode("utf-8")
+        else:
+            self._client_gone()
+            return
+        # print(self.client_version)
+        app_log.info("Connected to client version {}, waiting for init...".format(self.client_version))
+        # TODO: add a check for ok versions (compatible, high enough)
+        index = self._client_process.expect([TIMEOUT, RE_NODESCOUNT, EOF])
+        if index == 1:
+            # print(self._client_process.match.groups())
+            nodes_count = self._client_process.match.groups()[0].decode("utf-8")
+        else:
+            self._client_gone()
+            return
+        app_log.info("NodeManager initialization: loaded {} nodes into map".format(nodes_count))
+        index = self._client_process.expect([TIMEOUT, RE_STATUS, EOF])
+        if index == 1:
+            init_time = time() - start
+            # print(self._client_process.match.groups())
+            self.frozen_edge = int(self._client_process.match.groups()[0].decode("utf-8"))
+            self.from_open = int(self._client_process.match.groups()[1].decode("utf-8"))
+        else:
+            self._client_gone()
+            return
+        app_log.info("NodeManager initialization completed in {:0.2f} sec.".format(init_time))
+        app_log.info("frozen edge: {}, {} from open".format(self.frozen_edge, self.from_open))
+
     def _poll(self):
         """
         Will ask the node for the new blocks/tx since last known state and run through filters
         :return:
         """
-        app_log.info("Polling {}".format(self.frozen_edge))
-        # TODO
+        # app_log.info("Polling {}".format(self.frozen_edge))
+        if self._client_process is None:
+            self._create_client_process()
+        if self._client_process is None:
+            app_log.error("Unable to create client process")
+            return
+        self._client_process.sendline("")
+        index = self._client_process.expect([TIMEOUT, RE_STATUS, EOF])
+        if index == 1:
+            self.frozen_edge = int(self._client_process.match.groups()[0].decode("utf-8"))
+            self.from_open = int(self._client_process.match.groups()[1].decode("utf-8"))
+        else:
+            self._client_gone()
+        app_log.info("frozen edge: {}, {} from open".format(self.frozen_edge, self.from_open))
+
 
     def _watchdog(self):
         """
