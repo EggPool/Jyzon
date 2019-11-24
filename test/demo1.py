@@ -40,7 +40,11 @@ client.request("getinfo")
 # This one should be cached
 # client.request('getinfo')
 
+# Test with a random address
+client.request("getbalancebyaddress", ["ff188d0027165772-3fd521e65983f4fb-140840e6a720450e-f35494e81f80a1b1"])
 
+
+# client.request("stop")
 ## FOR REFERENCE ONLY - Wiresharked
 
 # bitcoin-cli -regest -getinfo

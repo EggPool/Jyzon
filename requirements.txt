@@ -2,3 +2,4 @@ tornado>=6.0.3
 jsonrpcserver
 jsonrpcclient[requests]>2,<3
 pexpect
+nyzostrings>=0.0.3
